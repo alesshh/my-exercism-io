@@ -1,74 +1,95 @@
-module BookKeeping
-  VERSION = 1
-end
-
 class Frame
-  MAX_PINS = 10.freeze
-
-  attr_reader :throws, :board
-  def initialize
-    @throws = 0
-    @board = MAX_PINS
+  def initialize(board, position)
+    @position = position
+    @board = board
+    @pins = 10
+    @rolls = []
   end
 
-  def add!(pins)
-    raise RuntimeError if pins > board
-
-    @throws += 1
-    @board -= pins
+  def roll(pins)
+    @rolls << pins
+    @pins -= pins
   end
 
-  def empty_board?
-    board == 0
+  def first_roll
+    @rolls.first
   end
 
-  def strike?
-    empty_board? && throws == 1
+  def done?
+    @rolls.size == 2 || @pins.zero?
+  end
+
+  def open?
+    !done?
   end
 
   def spare?
-    empty_board && throws == 2
+    @pins.zero? && @rolls.size == 2
   end
 
-  def complete?
-    empty_board? || throws == 2
+  def strike?
+    @pins.zero? && @rolls.size == 1
   end
 
-  def score
-    MAX_PINS - board
+  def frame_score
+    10 - @pins
+  end
+
+  def extra_score
+    return strike_extra_score if strike?
+    return spare_extra_score if spare?
+
+    0
+  end
+
+  def total_score
+    frame_score + extra_score
+  end
+
+  private
+
+  def strike_extra_score
+    frames = @board.frames
+    first_next_frame = frames[@position + 1]
+
+    return first_next_frame.frame_score if first_next_frame && !first_next_frame.strike?
+
+    second_frame_score = frames[@position + 2]
+
+    first_next_frame.frame_score + (second_frame_score && second_frame_score.first_roll).to_i
+  end
+
+  def spare_extra_score
+    next_frame = @board.frames[@position + 1]
+
+    (next_frame && next_frame.first_roll).to_i
   end
 end
 
 class Game
+  attr :frames
   def initialize
     @frames = []
   end
 
   def roll(pins)
-    raise(RuntimeError, 'Should not be able to roll after game is over') if complete?
-    
-    current_frame.add!(pins)
-  end
-
-  def complete?
-    frames.count(&:complete?) == 10
+    current_frame.roll pins
   end
 
   def score
-    raise(RuntimeError, 'Score cannot be taken until the end of the game') unless complete?
-
-    frames.map(&:score).reduce(0, :+)
+    frames.map(&:total_score).reduce(0, :+)
   end
 
   private
 
-  attr_reader :frames
-
   def current_frame
-    return @current_frame if @current_frame && !@current_frame.complete?
+    last = @frames.last
 
-    @current_frame = Frame.new
-    frames << @current_frame
-    @current_frame
+    return last if last && last.open?
+
+    last = Frame.new(self, @frames.size)
+    @frames << last
+
+    last
   end
 end

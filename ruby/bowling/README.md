@@ -68,7 +68,7 @@ directory. For example, if the test suite is called
 
 To include color from the command line:
 
-    ruby -rminitest/pride hello_world_test.rb
+    ruby -r minitest/pride hello_world_test.rb
 
 The test files may have the execution bit set so you may also be able to
 run it like this:
@@ -78,3 +78,7 @@ run it like this:
 ## Source
 
 The Bowling Game Kata at but UncleBob [http://butunclebob.com/ArticleS.UncleBob.TheBowlingGameKata](http://butunclebob.com/ArticleS.UncleBob.TheBowlingGameKata)
+
+## Submitting Incomplete Problems
+It's possible to submit an incomplete solution so you can see how others have completed the exercise.
+
